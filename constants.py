@@ -1,3 +1,6 @@
+from enum import Enum, auto
+
+
 class Columns:
 
     TRANSACTION = "Transaction"
@@ -33,3 +36,10 @@ class ModelConstants:
     BALANCED_ACCURACY_SCORE = "balanced_accuracy"
     CROSS_VALIDATIONS = 5
     N_JOBS = 5
+
+
+class Resample(Enum):
+
+    no_resample = auto()
+    smote = auto()
+    adasyn = auto()

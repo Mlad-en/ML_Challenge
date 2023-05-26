@@ -1,10 +1,15 @@
 from typing import Any
 
+from imblearn.over_sampling import ADASYN, SMOTENC
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_validate, GridSearchCV, train_test_split
+from sklearn.model_selection import (
+    cross_validate, GridSearchCV, train_test_split, RandomizedSearchCV
+)
 
-from constants import Columns, ModelConstants
+from sklearn.preprocessing import LabelEncoder
+
+from constants import Columns, ModelConstants, Resample
 
 DATA_TYPES = {
     Columns.TRANSACTION: np.int8,
@@ -37,9 +42,36 @@ class DataSplit:
     Represents a split of data into predictors and outcomes.
     """
 
-    def __init__(self, x, y):
-        self.predictors = x
-        self.outcome = y
+    def __init__(self, x, y, resample: Resample, columns):
+        if resample == Resample.no_resample:
+            print('Resample.no_resample')
+            self.predictors = x
+            self.outcome = y
+
+        elif resample == Resample.adasyn:
+            print('Resample.adasyn')
+            x_res, y_res = self.resample_adasyn(x, y)
+            self.predictors = x_res
+            self.outcome = y_res
+
+        elif resample == Resample.smote:
+            print(columns)
+            x_res, y_res = self.resample_smote(x, y, columns)
+            self.predictors = x_res
+            self.outcome = y_res
+
+        
+        else:
+            raise NotImplementedError(f"Resampling Method {resample.value} is not implemented.")
+
+    def resample_smote(self, x, y, columns):
+        return SMOTENC(
+            random_state=ModelConstants.RANDOM_STATE,
+            categorical_features=columns
+            ).fit_resample(x, y)
+
+    def resample_adasyn(self, x, y):
+        return ADASYN(random_state=ModelConstants.RANDOM_STATE).fit_resample(x, y)
 
 
 class Data:
@@ -47,9 +79,10 @@ class Data:
     Represents training and testing data splits.
     """
 
-    def __init__(self, x_train, x_test, y_train, y_test):
-        self.TRAINING = DataSplit(x_train, y_train)
-        self.TESTING = DataSplit(x_test, y_test)
+    def __init__(self, x_train, x_test, y_train, y_test, sampling, columns = None):
+        print(sampling)
+        self.TRAINING = DataSplit(x_train, y_train, sampling, columns)
+        self.TESTING = DataSplit(x_test, y_test, Resample.no_resample, columns)
 
 
 class TransactionDataset:
@@ -71,12 +104,14 @@ class TransactionDataset:
         include_cols = [col for col in self.data.columns if not col == Columns.TRANSACTION]
         return self.data.loc[:, include_cols]
 
-    def get_training_test_split(self):
+    def get_training_test_split(self, resample: Resample | None = None):
         """
         Split the dataset into training and testing sets.
 
         :return: Data object containing the training and testing splits.
         """
+        cols = list(self._predictors.dtypes=="category")
+        cat_col_ind = [ind for ind, val in enumerate(cols) if val == True]
         x_train, x_test, y_train, y_test = train_test_split(
             self._predictors,
             self._target,
@@ -85,7 +120,9 @@ class TransactionDataset:
             random_state=ModelConstants.RANDOM_STATE
         )
 
-        return Data(x_train, x_test, y_train, y_test)
+        sampling = resample if resample else Resample.no_resample
+
+        return Data(x_train, x_test, y_train, y_test, sampling, cat_col_ind)
 
 
 class TuneHyperParams:
@@ -106,7 +143,7 @@ class TuneHyperParams:
         self.jobs = jobs
         self.scoring = scoring
 
-    def grid_search(self, model, parameters: dict[str, list[Any]]):
+    def full_grid_search(self, model, parameters: dict[str, list[Any]]):
         """
         Perform grid search for hyperparameter tuning.
 
@@ -115,6 +152,24 @@ class TuneHyperParams:
         :return: TuneHyperParams utility object.
         """
         self.gs = GridSearchCV(
+            model,
+            parameters,
+            n_jobs=self.jobs,
+            cv=self.cross_validation,
+            scoring=ModelConstants.F1_SCORE,
+        )
+
+        return self
+    
+    def random_grid_search(self, model, parameters: dict[str, list[Any]]):
+        """
+        Perform grid search for hyperparameter tuning.
+
+        :param model: Model to be tuned.
+        :param parameters: Hyperparameter grid.
+        :return: TuneHyperParams utility object.
+        """
+        self.gs = RandomizedSearchCV(
             model,
             parameters,
             n_jobs=self.jobs,
@@ -141,7 +196,7 @@ class TuneHyperParams:
         :return: Grid search object.
         """
         print(self.gs.best_params_)
-        print(f"Best parameter (CV score{self.gs.best_score_}:.3f):")
+        print(f"Best parameter (CV score: {self.gs.best_score_:.3f}):")
         return self.gs
 
 
