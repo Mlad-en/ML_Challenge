@@ -7,7 +7,7 @@ from sklearn.model_selection import (
     cross_validate, GridSearchCV, train_test_split, RandomizedSearchCV
 )
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import matthews_corrcoef, f1_score, accuracy_score, balanced_accuracy_score
 
 from constants import Columns, ModelConstants, Resample
 
@@ -219,3 +219,33 @@ def get_cross_validation_results(model, predictors, outcome):
         print(f"{score_type}: {score.mean()}")
 
     return scores
+
+
+def get_final_model_performance(
+        model,
+        training_data: DataSplit,
+        testing_data: DataSplit
+):
+
+    model.fit(training_data.predictors, training_data.outcome)
+    predictions = model.predict(testing_data.predictors)
+
+    scoring_params = {
+        "F1 Score": f1_score,
+        "Accuracy": accuracy_score,
+        "Balanced Accuracy": balanced_accuracy_score,
+        "Matthew's Correlation Coefficient": matthews_corrcoef
+    }
+    test = []
+    score = []
+
+    for score_type, func in scoring_params.items():
+        test.append(score_type)
+        score.append(func(predictions, testing_data.outcome))
+
+    return pd.DataFrame(
+        {
+            "Test": test,
+            "Score": score
+        }
+    )
