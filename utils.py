@@ -105,7 +105,6 @@ class TransactionDataset:
 
         :return: Data object containing the training and testing splits.
         """
-
         x_train, x_test, y_train, y_test = train_test_split(
             self._predictors,
             self._target,
