@@ -1,13 +1,13 @@
 from typing import Any
 
-from imblearn.over_sampling import ADASYN, SMOTENC
+from imblearn.over_sampling import SMOTENC
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import (
     cross_validate, GridSearchCV, train_test_split, RandomizedSearchCV
 )
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import matthews_corrcoef, f1_score, accuracy_score, balanced_accuracy_score
 
 from constants import Columns, ModelConstants, Resample
 
@@ -42,36 +42,32 @@ class DataSplit:
     Represents a split of data into predictors and outcomes.
     """
 
-    def __init__(self, x, y, resample: Resample, columns):
+    def __init__(self, x, y, resample: Resample):
         if resample == Resample.no_resample:
-            print('Resample.no_resample')
             self.predictors = x
             self.outcome = y
 
-        elif resample == Resample.adasyn:
-            print('Resample.adasyn')
-            x_res, y_res = self.resample_adasyn(x, y)
-            self.predictors = x_res
-            self.outcome = y_res
-
         elif resample == Resample.smote:
-            print(columns)
-            x_res, y_res = self.resample_smote(x, y, columns)
+
+            cols = list(x.dtypes == "category")
+            cat_col_ind = [ind for ind, val in enumerate(cols) if val]
+
+            x[Columns.CUSTOMER_TYPE] = x[Columns.CUSTOMER_TYPE].astype("object")
+            x[Columns.SPECIFIC_HOLIDAY] = x[Columns.SPECIFIC_HOLIDAY].astype("object")
+
+            x_res, y_res = self._resample_smote(x, y, cat_col_ind)
             self.predictors = x_res
             self.outcome = y_res
 
-        
         else:
             raise NotImplementedError(f"Resampling Method {resample.value} is not implemented.")
 
-    def resample_smote(self, x, y, columns):
+    @staticmethod
+    def _resample_smote(x, y, columns):
         return SMOTENC(
             random_state=ModelConstants.RANDOM_STATE,
             categorical_features=columns
             ).fit_resample(x, y)
-
-    def resample_adasyn(self, x, y):
-        return ADASYN(random_state=ModelConstants.RANDOM_STATE).fit_resample(x, y)
 
 
 class Data:
@@ -79,10 +75,9 @@ class Data:
     Represents training and testing data splits.
     """
 
-    def __init__(self, x_train, x_test, y_train, y_test, sampling, columns = None):
-        print(sampling)
-        self.TRAINING = DataSplit(x_train, y_train, sampling, columns)
-        self.TESTING = DataSplit(x_test, y_test, Resample.no_resample, columns)
+    def __init__(self, x_train, x_test, y_train, y_test, sampling):
+        self.TRAINING = DataSplit(x_train, y_train, sampling)
+        self.TESTING = DataSplit(x_test, y_test, Resample.no_resample)
 
 
 class TransactionDataset:
@@ -110,8 +105,6 @@ class TransactionDataset:
 
         :return: Data object containing the training and testing splits.
         """
-        cols = list(self._predictors.dtypes=="category")
-        cat_col_ind = [ind for ind, val in enumerate(cols) if val == True]
         x_train, x_test, y_train, y_test = train_test_split(
             self._predictors,
             self._target,
@@ -122,7 +115,7 @@ class TransactionDataset:
 
         sampling = resample if resample else Resample.no_resample
 
-        return Data(x_train, x_test, y_train, y_test, sampling, cat_col_ind)
+        return Data(x_train, x_test, y_train, y_test, sampling)
 
 
 class TuneHyperParams:
@@ -225,3 +218,33 @@ def get_cross_validation_results(model, predictors, outcome):
         print(f"{score_type}: {score.mean()}")
 
     return scores
+
+
+def get_final_model_performance(
+        model,
+        training_data: DataSplit,
+        testing_data: DataSplit
+):
+
+    model.fit(training_data.predictors, training_data.outcome)
+    predictions = model.predict(testing_data.predictors)
+
+    scoring_params = {
+        "F1 Score": f1_score,
+        "Accuracy": accuracy_score,
+        "Balanced Accuracy": balanced_accuracy_score,
+        "Matthew's Correlation Coefficient": matthews_corrcoef
+    }
+    test = []
+    score = []
+
+    for score_type, func in scoring_params.items():
+        test.append(score_type)
+        score.append(func(predictions, testing_data.outcome))
+
+    return pd.DataFrame(
+        {
+            "Test": test,
+            "Score": score
+        }
+    )
