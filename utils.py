@@ -146,8 +146,7 @@ class TuneHyperParams:
             n_jobs=self.jobs,
             cv=self.cross_validation,
             scoring=self.scoring,
-            random_state=ModelConstants.RANDOM_STATE,
-            verbose=2
+            random_state=ModelConstants.RANDOM_STATE
         )
 
         return self
