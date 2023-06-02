@@ -196,7 +196,7 @@ def get_cross_validation_results(model, predictors, outcome):
         model,
         predictors,
         outcome,
-        cv=10,
+        cv=ModelConstants.CROSS_VALIDATIONS,
         scoring=scoring_params
     )
 
@@ -204,12 +204,12 @@ def get_cross_validation_results(model, predictors, outcome):
     score = []
 
     for score_type, score_value in scores.items():
-        test.append(score_type)
+        test.append(score_type.replace("test_", f"{ModelConstants.CROSS_VALIDATIONS}-fold CV ") + "mean score")
         score.append(score_value.mean())
 
     return pd.DataFrame(
         {
-            "Test": test,
+            "Metric for Training Set": test,
             "Score": score
         }
     )
@@ -239,7 +239,7 @@ def get_final_model_performance(
 
     return pd.DataFrame(
         {
-            "Test": test,
+            "Metric for Testing Set": test,
             "Score": score
         }
     )
