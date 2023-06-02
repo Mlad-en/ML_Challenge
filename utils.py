@@ -204,7 +204,7 @@ def get_cross_validation_results(model, predictors, outcome):
     score = []
 
     for score_type, score_value in scores.items():
-        test.append(score_type.replace("test_", f"{ModelConstants.CROSS_VALIDATIONS}-fold CV ") + "mean score")
+        test.append(score_type.replace("test_", f"{ModelConstants.CROSS_VALIDATIONS}-fold CV ") + " mean score")
         score.append(score_value.mean())
 
     return pd.DataFrame(
