@@ -38,8 +38,8 @@ class ModelConstants:
     N_JOBS = 5
 
 
-class Resample(Enum):
+class ResamplingStrategy:
 
-    no_resample = auto()
-    smote = auto()
-    adasyn = auto()
+    AUTO = "auto"
+    MINORITY_ONLY = "minority"
+    ALL = "all"
