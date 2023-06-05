@@ -1,3 +1,4 @@
+import warnings
 from typing import Any
 
 from imblearn.over_sampling import SMOTENC
@@ -7,9 +8,9 @@ from sklearn.model_selection import (
     cross_validate, GridSearchCV, train_test_split, RandomizedSearchCV
 )
 
-from sklearn.metrics import matthews_corrcoef, f1_score, accuracy_score, balanced_accuracy_score
+from sklearn.metrics import matthews_corrcoef, f1_score, accuracy_score, balanced_accuracy_score, make_scorer
 
-from constants import Columns, ModelConstants, Resample
+from constants import Columns, ModelConstants
 
 DATA_TYPES = {
     Columns.TRANSACTION: np.int8,
@@ -42,32 +43,10 @@ class DataSplit:
     Represents a split of data into predictors and outcomes.
     """
 
-    def __init__(self, x, y, resample: Resample):
-        if resample == Resample.no_resample:
-            self.predictors = x
-            self.outcome = y
+    def __init__(self, x, y):
 
-        elif resample == Resample.smote:
-
-            cols = list(x.dtypes == "category")
-            cat_col_ind = [ind for ind, val in enumerate(cols) if val]
-
-            x[Columns.CUSTOMER_TYPE] = x[Columns.CUSTOMER_TYPE].astype("object")
-            x[Columns.SPECIFIC_HOLIDAY] = x[Columns.SPECIFIC_HOLIDAY].astype("object")
-
-            x_res, y_res = self._resample_smote(x, y, cat_col_ind)
-            self.predictors = x_res
-            self.outcome = y_res
-
-        else:
-            raise NotImplementedError(f"Resampling Method {resample.value} is not implemented.")
-
-    @staticmethod
-    def _resample_smote(x, y, columns):
-        return SMOTENC(
-            random_state=ModelConstants.RANDOM_STATE,
-            categorical_features=columns
-            ).fit_resample(x, y)
+        self.predictors = x
+        self.outcome = y
 
 
 class Data:
@@ -75,9 +54,9 @@ class Data:
     Represents training and testing data splits.
     """
 
-    def __init__(self, x_train, x_test, y_train, y_test, sampling):
-        self.TRAINING = DataSplit(x_train, y_train, sampling)
-        self.TESTING = DataSplit(x_test, y_test, Resample.no_resample)
+    def __init__(self, x_train, x_test, y_train, y_test):
+        self.TRAINING = DataSplit(x_train, y_train)
+        self.TESTING = DataSplit(x_test, y_test)
 
 
 class TransactionDataset:
@@ -99,7 +78,7 @@ class TransactionDataset:
         include_cols = [col for col in self.data.columns if not col == Columns.TRANSACTION]
         return self.data.loc[:, include_cols]
 
-    def get_training_test_split(self, resample: Resample | None = None):
+    def get_training_test_split(self):
         """
         Split the dataset into training and testing sets.
 
@@ -113,9 +92,7 @@ class TransactionDataset:
             random_state=ModelConstants.RANDOM_STATE
         )
 
-        sampling = resample if resample else Resample.no_resample
-
-        return Data(x_train, x_test, y_train, y_test, sampling)
+        return Data(x_train, x_test, y_train, y_test)
 
 
 class TuneHyperParams:
@@ -149,7 +126,7 @@ class TuneHyperParams:
             parameters,
             n_jobs=self.jobs,
             cv=self.cross_validation,
-            scoring=ModelConstants.F1_SCORE,
+            scoring=self.scoring,
         )
 
         return self
@@ -167,7 +144,8 @@ class TuneHyperParams:
             parameters,
             n_jobs=self.jobs,
             cv=self.cross_validation,
-            scoring=ModelConstants.F1_SCORE,
+            scoring=self.scoring,
+            random_state=ModelConstants.RANDOM_STATE
         )
 
         return self
@@ -180,17 +158,19 @@ class TuneHyperParams:
         :param target: Target variable for model training.
         :return: TuneHyperParams utility object.
         """
-        self.gs.fit(predictors, target)
-        return self
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.gs.fit(predictors, target)
+            return self
 
-    def get_best_scores_and_params(self):
+    def get_best_model(self):
         """
         Print the best parameters found during grid search and return the grid search object.
         :return: Grid search object.
         """
         print(self.gs.best_params_)
         print(f"Best parameter (CV score: {self.gs.best_score_:.3f}):")
-        return self.gs
+        return self.gs.best_estimator_
 
 
 def get_cross_validation_results(model, predictors, outcome):
@@ -202,22 +182,36 @@ def get_cross_validation_results(model, predictors, outcome):
     :param outcome: Outcome (target variable) for cross-validation.
     :return: Dictionary of scoring metrics.
     """
+    matthews_score = make_scorer(matthews_corrcoef)
+
+    scoring_params = {
+        "F1 Score": "f1",
+        "Accuracy": "accuracy",
+        "Balanced Accuracy": "balanced_accuracy",
+        "Matthew's Correlation Coefficient": matthews_score
+    }
+
     scores = cross_validate(
         model,
         predictors,
         outcome,
-        cv=10,
-        scoring=[
-            ModelConstants.ACCURACY_SCORE,
-            ModelConstants.BALANCED_ACCURACY_SCORE,
-            ModelConstants.F1_SCORE
-        ]
+        cv=ModelConstants.CROSS_VALIDATIONS,
+        scoring=scoring_params
     )
 
-    for score_type, score in scores.items():
-        print(f"{score_type}: {score.mean()}")
+    test = []
+    score = []
 
-    return scores
+    for score_type, score_value in scores.items():
+        test.append(score_type.replace("test_", f"{ModelConstants.CROSS_VALIDATIONS}-fold CV ") + " mean score")
+        score.append(score_value.mean())
+
+    return pd.DataFrame(
+        {
+            "Metric for Training Set": test,
+            "Score": score
+        }
+    )
 
 
 def get_final_model_performance(
@@ -244,7 +238,7 @@ def get_final_model_performance(
 
     return pd.DataFrame(
         {
-            "Test": test,
+            "Metric for Testing Set": test,
             "Score": score
         }
     )
