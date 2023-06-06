@@ -11,6 +11,9 @@ imbalanced-learn = "*"
 jupyter = "*"
 statsmodels = "*"
 yellowbrick = "*"
+joblib = "*"
+shap = "*"
+mlxtend = "*"
 
 [dev-packages]
 

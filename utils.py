@@ -1,14 +1,20 @@
 import warnings
 from typing import Any
+from pprint import PrettyPrinter
 
-from imblearn.over_sampling import SMOTENC
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import (
     cross_validate, GridSearchCV, train_test_split, RandomizedSearchCV
 )
 
-from sklearn.metrics import matthews_corrcoef, f1_score, accuracy_score, balanced_accuracy_score, make_scorer
+from sklearn.metrics import (
+    matthews_corrcoef,
+    f1_score,
+    accuracy_score,
+    balanced_accuracy_score,
+    make_scorer
+)
 
 from constants import Columns, ModelConstants
 
@@ -168,77 +174,72 @@ class TuneHyperParams:
         Print the best parameters found during grid search and return the grid search object.
         :return: Grid search object.
         """
-        print(self.gs.best_params_)
+        pprinter = PrettyPrinter(indent=4)
+        pprinter.pprint(self.gs.best_params_)
         print(f"Best parameter (CV score: {self.gs.best_score_:.3f}):")
         return self.gs.best_estimator_
 
 
-def get_cross_validation_results(model, predictors, outcome):
-    """
-    Perform cross-validation and calculate scoring metrics for the model.
+class FinalModelPerformance:
 
-    :param model: Model to be evaluated.
-    :param predictors: Predictors (input features) for cross-validation.
-    :param outcome: Outcome (target variable) for cross-validation.
-    :return: Dictionary of scoring metrics.
-    """
-    matthews_score = make_scorer(matthews_corrcoef)
+    def __init__(self, model, data: Data):
+        self.model = model
+        self.data = data
 
-    scoring_params = {
-        "F1 Score": "f1",
-        "Accuracy": "accuracy",
-        "Balanced Accuracy": "balanced_accuracy",
-        "Matthew's Correlation Coefficient": matthews_score
-    }
+    def get_final_model_performance(self):
 
-    scores = cross_validate(
-        model,
-        predictors,
-        outcome,
-        cv=ModelConstants.CROSS_VALIDATIONS,
-        scoring=scoring_params
-    )
+        self.model.fit(self.data.TRAINING.predictors, self.data.TRAINING.outcome)
+        predictions = self.model.predict(self.data.TESTING.predictors)
 
-    test = []
-    score = []
-
-    for score_type, score_value in scores.items():
-        test.append(score_type.replace("test_", f"{ModelConstants.CROSS_VALIDATIONS}-fold CV ") + " mean score")
-        score.append(score_value.mean())
-
-    return pd.DataFrame(
-        {
-            "Metric for Training Set": test,
-            "Score": score
+        scoring_params = {
+            "F1 Score": f1_score,
+            "Accuracy": accuracy_score,
+            "Balanced Accuracy": balanced_accuracy_score,
+            "Matthew's Correlation Coefficient": matthews_corrcoef
         }
-    )
+        test = []
+        score = []
 
+        for score_type, func in scoring_params.items():
+            test.append(score_type)
+            score.append(func(predictions, self.data.TESTING.outcome))
 
-def get_final_model_performance(
-        model,
-        training_data: DataSplit,
-        testing_data: DataSplit
-):
+        return pd.DataFrame(
+            {
+                "Metric for Testing Set": test,
+                "Score": score
+            }
+        )
 
-    model.fit(training_data.predictors, training_data.outcome)
-    predictions = model.predict(testing_data.predictors)
+    def get_cross_validation_results(self):
 
-    scoring_params = {
-        "F1 Score": f1_score,
-        "Accuracy": accuracy_score,
-        "Balanced Accuracy": balanced_accuracy_score,
-        "Matthew's Correlation Coefficient": matthews_corrcoef
-    }
-    test = []
-    score = []
+        matthews_score = make_scorer(matthews_corrcoef)
 
-    for score_type, func in scoring_params.items():
-        test.append(score_type)
-        score.append(func(predictions, testing_data.outcome))
-
-    return pd.DataFrame(
-        {
-            "Metric for Testing Set": test,
-            "Score": score
+        scoring_params = {
+            "F1 Score": "f1",
+            "Accuracy": "accuracy",
+            "Balanced Accuracy": "balanced_accuracy",
+            "Matthew's Correlation Coefficient": matthews_score
         }
-    )
+
+        scores = cross_validate(
+            self.model,
+            self.data.TRAINING.predictors,
+            self.data.TRAINING.outcome,
+            cv=ModelConstants.CROSS_VALIDATIONS,
+            scoring=scoring_params
+        )
+
+        test = []
+        score = []
+
+        for score_type, score_value in scores.items():
+            test.append(score_type.replace("test_", f"{ModelConstants.CROSS_VALIDATIONS}-fold CV ") + " mean score")
+            score.append(score_value.mean())
+
+        return pd.DataFrame(
+            {
+                "Metric for Training Set": test,
+                "Score": score
+            }
+        )
