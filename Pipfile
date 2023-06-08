@@ -9,11 +9,12 @@ numpy = "*"
 scikit-learn = "*"
 imbalanced-learn = "*"
 jupyter = "*"
-statsmodels = "*"
 yellowbrick = "*"
 joblib = "*"
 shap = "*"
 mlxtend = "*"
+matplotlib = "*"
+seaborn = "*"
 
 [dev-packages]
 
