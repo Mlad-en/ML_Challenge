@@ -15,6 +15,7 @@ shap = "*"
 mlxtend = "*"
 matplotlib = "*"
 seaborn = "*"
+explainerdashboard = "*"
 
 [dev-packages]
 black = "*"
