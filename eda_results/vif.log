@@ -1,0 +1,32 @@
+Variance Inflation Factor
+====================================================================================================
+                         feature      VIF
+                        SystemF1 1.159768
+                        SystemF2 1.129398
+                        SystemF3 1.023611
+                        SystemF4 1.075104
+                        SystemF5 1.002266
+                    Account_Page 1.936159
+               Account_Page_Time 1.688586
+                       Info_Page 1.829949
+                  Info_Page_Time 1.677846
+                     ProductPage 4.439028
+                ProductPage_Time 4.318247
+                           Month 1.216616
+                         Weekday 1.081197
+              GoogleAnalytics_BR 5.719347
+              GoogleAnalytics_ER 6.392297
+              GoogleAnalytics_PV 1.055303
+                   Ad_Campaign_1 1.053800
+                    Ad_Campaign2 1.023626
+                    Ad_Campaign3 1.005251
+      Customer_Type_New_Customer      inf
+             Customer_Type_Other      inf
+Customer_Type_Returning_Customer      inf
+               SpecificHoliday_0      inf
+             SpecificHoliday_0.2      inf
+             SpecificHoliday_0.4      inf
+             SpecificHoliday_0.6      inf
+             SpecificHoliday_0.8      inf
+               SpecificHoliday_1      inf
+====================================================================================================

@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from pathlib import Path
 
 
 class Columns:
@@ -43,3 +44,22 @@ class ResamplingStrategy:
     AUTO = "auto"
     MINORITY_ONLY = "minority"
     ALL = "all"
+
+
+class Locations:
+
+    root = Path(".")
+    models_exports = root / "models_exports"
+    eda_results = root / "eda_results"
+    confusion_matrices = root / "confusion_matrices"
+    explainable_ai = root / "XAI"
+
+
+class ModelFileNames:
+
+    logistic_regression = "logistic_regression_classifier.joblib"
+    knn = "knn_classifier.joblib"
+    random_forest = "random_forest_classifier.joblib"
+    naive_bayes = "naive_bayes_classifier.joblib"
+    svc = "support_vector_classifier.joblib"
+    voting_ensemble = "voting_ensemble.joblib"

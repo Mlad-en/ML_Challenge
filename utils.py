@@ -44,6 +44,14 @@ DATA_TYPES = {
 }
 
 
+def format_output(item, title):
+    sep = '=' * 100
+    if isinstance(item, pd.DataFrame) or isinstance(item, pd.Series):
+        item = item.to_string(index=False)
+
+    return f"{title}\n{sep}\n{item}\n{sep}"
+
+
 class DataSplit:
     """
     Represents a split of data into predictors and outcomes.
