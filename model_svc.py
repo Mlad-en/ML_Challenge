@@ -13,7 +13,6 @@ from utils import TuneHyperParams, TransactionDataset, FinalModelPerformance
 
 
 if __name__ == "__main__":
-
     data = TransactionDataset().get_training_test_split()
 
     drop_columns = [
@@ -73,6 +72,5 @@ if __name__ == "__main__":
     final_model_evaluation_svc.get_final_model_performance()
 
     dump(
-        final_model_evaluation_svc.model,
-        Locations.models_exports / ModelFileNames.svc
+        final_model_evaluation_svc.model, Locations.models_exports / ModelFileNames.svc
     )

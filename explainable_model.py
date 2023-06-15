@@ -1,6 +1,6 @@
 import warnings
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 from joblib import load
 from utils import TransactionDataset

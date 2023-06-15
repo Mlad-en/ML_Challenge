@@ -77,7 +77,7 @@ if __name__ == "__main__":
             {0: 2, 1: 8},
             {0: 1, 1: 9},
             None,
-        ]
+        ],
     }
 
     # Running a Random Search on the pipeline with the above selected parameters

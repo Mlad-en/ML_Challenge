@@ -6,7 +6,6 @@ from constants import Locations, ModelFileNames
 
 
 if __name__ == "__main__":
-
     lg_mmodel = load(Locations.models_exports / ModelFileNames.logistic_regression)
     knn_model = load(Locations.models_exports / ModelFileNames.knn)
     nb_model = load(Locations.models_exports / ModelFileNames.naive_bayes)

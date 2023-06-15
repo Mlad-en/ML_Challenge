@@ -1,6 +1,12 @@
 from utils import TransactionDataset, TuneHyperParams, FinalModelPerformance
 
-from constants import Columns, ModelConstants, ResamplingStrategy, ModelFileNames, Locations
+from constants import (
+    Columns,
+    ModelConstants,
+    ResamplingStrategy,
+    ModelFileNames,
+    Locations,
+)
 
 import numpy as np
 
@@ -23,15 +29,14 @@ from imblearn.under_sampling import TomekLinks, NearMiss
 from joblib import dump
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     data = TransactionDataset().get_training_test_split()
 
     pages_to_drop = [
-                Columns.INFO_PAGE_TIME,
-                Columns.PRODUCT_PAGE_TIME,
-                Columns.GOOGLE_ANALYTICS_ER,
-            ]
+        Columns.INFO_PAGE_TIME,
+        Columns.PRODUCT_PAGE_TIME,
+        Columns.GOOGLE_ANALYTICS_ER,
+    ]
 
     log_transform = FunctionTransformer(
         func=np.log1p, inverse_func=np.expm1, check_inverse=False
@@ -131,30 +136,34 @@ if __name__ == '__main__':
         ],
     }
 
-    under_sampling_tuning = {"under_sampling": [near_miss_sampling, tomek_link_sampling, "passthrough"],}
-    knn__n_neighbors_tuning = {"knn__n_neighbors": [5, 7, 9, 11, 13, 15, 17, 19, 21, 25]}
+    under_sampling_tuning = {
+        "under_sampling": [near_miss_sampling, tomek_link_sampling, "passthrough"],
+    }
+    knn__n_neighbors_tuning = {
+        "knn__n_neighbors": [5, 7, 9, 11, 13, 15, 17, 19, 21, 25]
+    }
     knn__weights = {"knn__weights": ["uniform", "distance"]}
     knn_power = {"knn__p": [1, 2]}
     knn_feature_selection = {"feature_selection__k": [5, 7, 9, 10, 12, 14, 16, 18]}
 
     tuning_params_1 = (
-            column_transformation_tune
-            | over_sampling_tuning
-            | over_sampling__sampling_strategy_tuning
-            | under_sampling_tuning
-            | knn__n_neighbors_tuning
-            | knn__weights
-            | knn_power
-            | knn_feature_selection
+        column_transformation_tune
+        | over_sampling_tuning
+        | over_sampling__sampling_strategy_tuning
+        | under_sampling_tuning
+        | knn__n_neighbors_tuning
+        | knn__weights
+        | knn_power
+        | knn_feature_selection
     )
 
     tuning_params_2 = (
-            column_transformation_tune
-            | under_sampling_tuning
-            | knn__n_neighbors_tuning
-            | knn__weights
-            | knn_power
-            | knn_feature_selection
+        column_transformation_tune
+        | under_sampling_tuning
+        | knn__n_neighbors_tuning
+        | knn__weights
+        | knn_power
+        | knn_feature_selection
     )
 
     best_model = (

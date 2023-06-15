@@ -13,9 +13,9 @@ sns.set_style("dark")
 basicConfig(
     level=INFO,
     filename=Locations.eda_results / "features.log",
-    filemode='a',
+    filemode="a",
     format="{message}",
-    style="{"
+    style="{",
 )
 
 logger = getLogger(__name__)
@@ -284,7 +284,9 @@ if __name__ == "__main__":
             hue=df[Columns.TRANSACTION],
             ax=axs[index],
         )
-    plt.savefig(Locations.eda_results / "google_analytics_per_transaction_distributions.png")
+    plt.savefig(
+        Locations.eda_results / "google_analytics_per_transaction_distributions.png"
+    )
 
     plt.figure(figsize=(16, 12))
     sns.heatmap(df.corr(method="pearson").round(3), annot=True)

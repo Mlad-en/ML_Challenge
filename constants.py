@@ -6,6 +6,7 @@ class Columns:
     """
     Provides quick support for and access to data file columns
     """
+
     TRANSACTION = "Transaction"
     CUSTOMER_TYPE = "Customer_Type"
     SYSTEM_F1 = "SystemF1"
@@ -34,6 +35,7 @@ class ModelConstants:
     """
     Provides quick default model parameters that can be used across model building, tuning and evaluation
     """
+
     MAX_ITERATIONS = 1000
     RANDOM_STATE = 123
     F1_SCORE = "f1"
@@ -47,6 +49,7 @@ class ResamplingStrategy:
     """
     Provides an easy to reference point for SMOTE and ADASYN resampling strategies
     """
+
     AUTO = "auto"
     MINORITY_ONLY = "minority"
     ALL = "all"

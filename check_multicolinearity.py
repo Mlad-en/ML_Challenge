@@ -15,24 +15,27 @@ eda_results = path / "eda_results"
 basicConfig(
     level=INFO,
     filename=eda_results / "vif.log",
-    filemode='w',
+    filemode="w",
     format="{message}",
-    style="{"
+    style="{",
 )
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     data = TransactionDataset()
     data.data.pop(Columns.TRANSACTION)
 
-    data.data = pd.get_dummies(data.data, columns=[Columns.CUSTOMER_TYPE, Columns.SPECIFIC_HOLIDAY])
+    data.data = pd.get_dummies(
+        data.data, columns=[Columns.CUSTOMER_TYPE, Columns.SPECIFIC_HOLIDAY]
+    )
     data.data = data.data.astype("float")
 
     vif_data = pd.DataFrame()
     vif_data["feature"] = data.data.columns
 
-    vif_data["VIF"] = [variance_inflation_factor(data.data.values, i)
-                       for i in range(len(data.data.columns))]
+    vif_data["VIF"] = [
+        variance_inflation_factor(data.data.values, i)
+        for i in range(len(data.data.columns))
+    ]
 
     logging.info(format_output(vif_data, "Variance Inflation Factor"))

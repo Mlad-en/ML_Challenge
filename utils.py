@@ -5,7 +5,10 @@ from pprint import PrettyPrinter
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import (
-    cross_validate, GridSearchCV, train_test_split, RandomizedSearchCV
+    cross_validate,
+    GridSearchCV,
+    train_test_split,
+    RandomizedSearchCV,
 )
 
 from sklearn.metrics import (
@@ -13,7 +16,7 @@ from sklearn.metrics import (
     f1_score,
     accuracy_score,
     balanced_accuracy_score,
-    make_scorer
+    make_scorer,
 )
 
 from constants import Columns, ModelConstants
@@ -48,7 +51,7 @@ def format_output(item, title):
     """
     Function used to format output of logging messages
     """
-    sep = '=' * 100
+    sep = "=" * 100
     if isinstance(item, pd.DataFrame) or isinstance(item, pd.Series):
         item = item.to_string(index=False)
 
@@ -61,7 +64,6 @@ class DataSplit:
     """
 
     def __init__(self, x, y):
-
         self.predictors = x
         self.outcome = y
 
@@ -81,7 +83,9 @@ class TransactionDataset:
     Represents the ML Challenge Transaction dataset.
     """
 
-    _CSV_FILE = "https://raw.githubusercontent.com/Mlad-en/ML_Challenge/main/Newdata-2.csv"
+    _CSV_FILE = (
+        "https://raw.githubusercontent.com/Mlad-en/ML_Challenge/main/Newdata-2.csv"
+    )
 
     def __init__(self):
         self.data = pd.read_csv(self._CSV_FILE, dtype=DATA_TYPES)
@@ -92,7 +96,9 @@ class TransactionDataset:
 
     @property
     def _predictors(self):
-        include_cols = [col for col in self.data.columns if not col == Columns.TRANSACTION]
+        include_cols = [
+            col for col in self.data.columns if not col == Columns.TRANSACTION
+        ]
         return self.data.loc[:, include_cols]
 
     def get_training_test_split(self):
@@ -104,8 +110,8 @@ class TransactionDataset:
             self._predictors,
             self._target,
             stratify=self._target,
-            test_size=.2,
-            random_state=ModelConstants.RANDOM_STATE
+            test_size=0.2,
+            random_state=ModelConstants.RANDOM_STATE,
         )
 
         return Data(x_train, x_test, y_train, y_test)
@@ -116,7 +122,12 @@ class TuneHyperParams:
     Utility class for hyperparameter tuning.
     """
 
-    def __init__(self, cross_validation: int = 5, jobs: int = 5, scoring: str = ModelConstants.F1_SCORE):
+    def __init__(
+        self,
+        cross_validation: int = 5,
+        jobs: int = 5,
+        scoring: str = ModelConstants.F1_SCORE,
+    ):
         """
         Initialize the TuneHyperParams object.
 
@@ -146,7 +157,7 @@ class TuneHyperParams:
         )
 
         return self
-    
+
     def random_grid_search(self, model, parameters: dict[str, list[Any]]):
         """
         Perform grid search for hyperparameter tuning.
@@ -161,7 +172,7 @@ class TuneHyperParams:
             n_jobs=self.jobs,
             cv=self.cross_validation,
             scoring=self.scoring,
-            random_state=ModelConstants.RANDOM_STATE
+            random_state=ModelConstants.RANDOM_STATE,
         )
 
         return self
@@ -199,7 +210,6 @@ class FinalModelPerformance:
         self.data = data
 
     def get_final_model_performance(self):
-
         """
         Fits model and provides the results from different scoring metrics
         :return: A DataFrame objects with the results different scoring metrics on the TESTING dataset
@@ -212,7 +222,7 @@ class FinalModelPerformance:
             "F1 Score": f1_score,
             "Accuracy": accuracy_score,
             "Balanced Accuracy": balanced_accuracy_score,
-            "Matthew's Correlation Coefficient": matthews_corrcoef
+            "Matthew's Correlation Coefficient": matthews_corrcoef,
         }
         test = []
         score = []
@@ -221,15 +231,9 @@ class FinalModelPerformance:
             test.append(score_type)
             score.append(func(predictions, self.data.TESTING.outcome))
 
-        return pd.DataFrame(
-            {
-                "Metric for Testing Set": test,
-                "Score": score
-            }
-        )
+        return pd.DataFrame({"Metric for Testing Set": test, "Score": score})
 
     def get_cross_validation_results(self):
-
         """
         Runs a 5-fold cross validation on the model and provides the results from different scoring metrics
         :return: A DataFrame objects with the average results different scoring metrics on the Validation dataset(s)
@@ -241,7 +245,7 @@ class FinalModelPerformance:
             "F1 Score": "f1",
             "Accuracy": "accuracy",
             "Balanced Accuracy": "balanced_accuracy",
-            "Matthew's Correlation Coefficient": matthews_score
+            "Matthew's Correlation Coefficient": matthews_score,
         }
 
         scores = cross_validate(
@@ -249,19 +253,19 @@ class FinalModelPerformance:
             self.data.TRAINING.predictors,
             self.data.TRAINING.outcome,
             cv=ModelConstants.CROSS_VALIDATIONS,
-            scoring=scoring_params
+            scoring=scoring_params,
         )
 
         test = []
         score = []
 
         for score_type, score_value in scores.items():
-            test.append(score_type.replace("test_", f"{ModelConstants.CROSS_VALIDATIONS}-fold CV ") + " mean score")
+            test.append(
+                score_type.replace(
+                    "test_", f"{ModelConstants.CROSS_VALIDATIONS}-fold CV "
+                )
+                + " mean score"
+            )
             score.append(score_value.mean())
 
-        return pd.DataFrame(
-            {
-                "Metric for Training Set": test,
-                "Score": score
-            }
-        )
+        return pd.DataFrame({"Metric for Training Set": test, "Score": score})
