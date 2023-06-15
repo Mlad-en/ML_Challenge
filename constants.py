@@ -3,7 +3,9 @@ from pathlib import Path
 
 
 class Columns:
-
+    """
+    Provides quick support for and access to data file columns
+    """
     TRANSACTION = "Transaction"
     CUSTOMER_TYPE = "Customer_Type"
     SYSTEM_F1 = "SystemF1"
@@ -29,7 +31,9 @@ class Columns:
 
 
 class ModelConstants:
-    
+    """
+    Provides quick default model parameters that can be used across model building, tuning and evaluation
+    """
     MAX_ITERATIONS = 1000
     RANDOM_STATE = 123
     F1_SCORE = "f1"
@@ -40,13 +44,18 @@ class ModelConstants:
 
 
 class ResamplingStrategy:
-
+    """
+    Provides an easy to reference point for SMOTE and ADASYN resampling strategies
+    """
     AUTO = "auto"
     MINORITY_ONLY = "minority"
     ALL = "all"
 
 
 class Locations:
+    """
+    Provides a standardized way of referring to project locations
+    """
 
     root = Path(".")
     models_exports = root / "models_exports"
@@ -56,6 +65,9 @@ class Locations:
 
 
 class ModelFileNames:
+    """
+    Provides a standardized way of referring to persisted model objects
+    """
 
     logistic_regression = "logistic_regression_classifier.joblib"
     knn = "knn_classifier.joblib"

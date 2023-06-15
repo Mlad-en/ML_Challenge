@@ -45,6 +45,9 @@ DATA_TYPES = {
 
 
 def format_output(item, title):
+    """
+    Function used to format output of logging messages
+    """
     sep = '=' * 100
     if isinstance(item, pd.DataFrame) or isinstance(item, pd.Series):
         item = item.to_string(index=False)
@@ -95,7 +98,6 @@ class TransactionDataset:
     def get_training_test_split(self):
         """
         Split the dataset into training and testing sets.
-
         :return: Data object containing the training and testing splits.
         """
         x_train, x_test, y_train, y_test = train_test_split(
@@ -180,7 +182,7 @@ class TuneHyperParams:
     def get_best_model(self):
         """
         Print the best parameters found during grid search and return the grid search object.
-        :return: Grid search object.
+        :return: Best estimated model object
         """
         pprinter = PrettyPrinter(indent=4)
         pprinter.pprint(self.gs.best_params_)
@@ -190,11 +192,18 @@ class TuneHyperParams:
 
 class FinalModelPerformance:
 
+    """Class for evaluating the final performance of a model."""
+
     def __init__(self, model, data: Data):
         self.model = model
         self.data = data
 
     def get_final_model_performance(self):
+
+        """
+        Fits model and provides the results from different scoring metrics
+        :return: A DataFrame objects with the results different scoring metrics on the TESTING dataset
+        """
 
         self.model.fit(self.data.TRAINING.predictors, self.data.TRAINING.outcome)
         predictions = self.model.predict(self.data.TESTING.predictors)
@@ -220,6 +229,11 @@ class FinalModelPerformance:
         )
 
     def get_cross_validation_results(self):
+
+        """
+        Runs a 5-fold cross validation on the model and provides the results from different scoring metrics
+        :return: A DataFrame objects with the average results different scoring metrics on the Validation dataset(s)
+        """
 
         matthews_score = make_scorer(matthews_corrcoef)
 
